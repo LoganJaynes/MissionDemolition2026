@@ -35,5 +35,6 @@ public class FollowCam : MonoBehaviour
         destination = Vector3.Lerp(transform.position, destination, easing);
         destination.z = camZ;
         transform.position = destination;
+        Camera.main.orthographicSize = destination.y + 10;
     }
 }
