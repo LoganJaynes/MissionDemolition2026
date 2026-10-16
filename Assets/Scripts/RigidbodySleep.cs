@@ -17,7 +17,7 @@ public class RigidbodySleep : MonoBehaviour
     {
         if (sleepCountdown > 0)
         {
-            rigid.sleep();
+            rigid.Sleep();
             sleepCountdown--;
         }
     }
