@@ -60,4 +60,13 @@ public class Projectile : MonoBehaviour
             Destroy(p.gameObject);
         }
     }
+
+    static public bool ANY_AWAKE()
+    {
+        foreach (Projectile p in PROJECTILES)
+        {
+            if (p != null && p.awake) return true;
+        }
+        return false;
+    }
 }

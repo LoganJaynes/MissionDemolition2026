@@ -9,6 +9,15 @@ public class Slingshot : MonoBehaviour
     public float velocityMult = 10f;
     public GameObject projLinePrefab;
 
+    [Header("Rubber Band")]
+    public LineRenderer band;
+    public Transform leftArm;
+    public Transform rightArm;
+
+    [Header("Audio")]
+    public AudioSource audioSource;
+    public AudioClip snapClip;
+
     [Header("Dynamic")]
     public GameObject launchPoint;
     public Vector3 launchPos;
@@ -21,7 +30,19 @@ public class Slingshot : MonoBehaviour
         launchPoint = launchPointTrans.gameObject;
         launchPoint.SetActive(false);
         launchPos = launchPointTrans.position;
+
+        band.useWorldSpace = true;
+        band.positionCount = 3;
+        UpdateBand(launchPos);
     }
+
+    void UpdateBand(Vector3 pullPos)
+    {
+        band.SetPosition(0, leftArm.position);
+        band.SetPosition(1, pullPos);
+        band.SetPosition(2, rightArm.position);
+    }
+
     void OnMouseEnter()
     {
         launchPoint.SetActive(true);
@@ -34,6 +55,8 @@ public class Slingshot : MonoBehaviour
 
     void OnMouseDown()
     {
+        if (!MissionDemolition.CAN_SHOOT()) return;
+
         aimingMode = true;
         projectile = Instantiate(projectilePrefab) as GameObject;
         projectile.transform.position = launchPos;
@@ -48,7 +71,7 @@ public class Slingshot : MonoBehaviour
         mousePos2D.z = -Camera.main.transform.position.z;
         Vector3 mousePos3D = Camera.main.ScreenToWorldPoint(mousePos2D);
 
-        Vector3 mouseDelta = mousePos3D -launchPos;
+        Vector3 mouseDelta = mousePos3D - launchPos;
 
         float maxMagnitude = this.GetComponent<SphereCollider>().radius;
         if (mouseDelta.magnitude > maxMagnitude)
@@ -58,6 +81,7 @@ public class Slingshot : MonoBehaviour
         }
         Vector3 projPos = launchPos + mouseDelta;
         projectile.transform.position = projPos;
+        UpdateBand(projPos);
 
         if (Input.GetMouseButtonUp(0))
         {
@@ -65,12 +89,16 @@ public class Slingshot : MonoBehaviour
             Rigidbody projRB = projectile.GetComponent<Rigidbody>();
             projRB.isKinematic = false;
             projRB.collisionDetectionMode = CollisionDetectionMode.Continuous;
-            projRB.velocity = -mouseDelta * velocityMult;
+            projRB.velocity = -mouseDelta * velocityMult;  // Unity 6: use projRB.linearVelocity
             FollowCam.SWITCH_VIEW(FollowCam.eView.slingshot);
             FollowCam.POI = projectile;
             Instantiate<GameObject>(projLinePrefab, projectile.transform);
             projectile = null;
             MissionDemolition.SHOT_FIRED();
+
+            UpdateBand(launchPos);                       // band snaps back
+            if (audioSource != null && snapClip != null)
+                audioSource.PlayOneShot(snapClip);       // snap sound
         }
     }
 }
